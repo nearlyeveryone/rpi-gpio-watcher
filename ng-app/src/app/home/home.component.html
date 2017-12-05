@@ -1,0 +1,39 @@
+<div class="col-md-6 offset-md-3">
+  <h2>gpio-watcher</h2>
+
+  <vg-player>
+    <vg-overlay-play></vg-overlay-play>
+    <vg-buffering></vg-buffering>
+    
+    <vg-controls [vgAutohide]="true" [vgAutohideTime]="1.5">
+      <vg-play-pause></vg-play-pause>
+      <vg-fullscreen></vg-fullscreen>
+    </vg-controls>
+    <video [vgMedia]="media" #media id="stream"
+          [vgHls]="'/api/stream/stream.m3u8'"
+          type="video/mp4"
+          preload="auto">
+    </video>
+  </vg-player>
+
+  <div>
+    <ng-template ngFor let-gpioControl [ngForOf]="gpioControls" let-i="index">
+        <ng-template #tipContent>{{gpioControl.tooltip}}</ng-template>
+        <div [class.border-danger]="!gpioControl.value" [class.border-success]="gpioControl.value" class="card text-white card-padding" [ngbTooltip]="tipContent">
+          <h4>{{gpioControl.description}}</h4>
+          <p class="text-info">Status: {{gpioControl.status}}</p>
+          <p class="text-muted">Parameters: {{ gpioControl.parameters }}</p>
+
+          <button *ngIf="gpioControl.value; else elseBlock" (click)="toggleControl(i)" type="button" class="btn btn-success">On</button>
+          <ng-template #elseBlock>
+            <button (click)="toggleControl(i)" type="button" class="btn btn-danger">Off</button>
+          </ng-template>
+          <button (click)="openEditModal(i)" class="btn btn-secondary">Edit</button>
+        </div>
+    </ng-template>
+    <button (click)="openAddModal()" class="btn-primary btn-lg btn-block">Add Control</button>
+  </div>
+  <a [routerLink]="['/login']">
+    <button (click)="logout()" class="btn-secondary btn-lg btn-block">Logout</button>
+  </a>
+</div>
