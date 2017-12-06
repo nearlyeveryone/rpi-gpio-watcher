@@ -12,6 +12,8 @@ export class UserService {
   constructor(private http: HttpClient, private authService: AuthenticationService) { }
 
   getGpioControls():Observable<GpioControl[]> {
+    Observable.interval(2000).switchMap(() => this.http.get<GpioControl[]>('/api/Gpio'))
+
     return this.http.get<GpioControl[]>('/api/Gpio');
   }
 

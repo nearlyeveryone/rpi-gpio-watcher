@@ -5,6 +5,8 @@ import { GpioControl } from '../models/gpioControl'
 
 import { NgbModal, ModalDismissReasons } from '@ng-bootstrap/ng-bootstrap';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap/modal/modal-ref';
+import { Observable } from 'rxjs';
+import 'rxjs/add/operator/map'
 
 interface EditModalResponse {
   gpioControl: GpioControl;
@@ -32,13 +34,20 @@ export class EditModelContent {
 })
 export class HomeComponent implements OnInit {
   gpioControls: GpioControl[] = [];
+  updateGpio: boolean = true;
 
   constructor(private userService: UserService, private modalService: NgbModal) { }
 
   ngOnInit() {
-    this.userService.getGpioControls()
-      .subscribe(gpioControls => {
-        this.gpioControls = gpioControls;
+    Observable.interval(2000)
+    .switchMap(() => this.userService.getGpioControls())
+    .map(res => res)
+    .subscribe(gpioControls => {
+        if(this.updateGpio) {
+          this.gpioControls = gpioControls;
+          console.log(this.gpioControls)
+        }
+        
       });
   }
 
@@ -50,6 +59,7 @@ export class HomeComponent implements OnInit {
   }
 
   openEditModal(index: number) {
+    this.updateGpio = false;
     var modalRef = this.modalService.open(EditModelContent);
     modalRef.componentInstance.gpioControl = this.gpioControls[index];
     modalRef.result.then((result) => {
@@ -65,11 +75,13 @@ export class HomeComponent implements OnInit {
           this.userService.updateGpioControl(this.gpioControls[index]);
         }
       }
-    }, result => {}
+      this.updateGpio = true;
+    }, result => {this.updateGpio = true;}
     );
   }
 
   openAddModal() {
+    this.updateGpio = false;
     var modalRef = this.modalService.open(EditModelContent);
     var newControl: GpioControl = {controlModelId: 0, description: "", status: "",tooltip: "", parameters: "", value: false};
     modalRef.componentInstance.gpioControl = newControl;
@@ -84,7 +96,8 @@ export class HomeComponent implements OnInit {
           this.userService.addGpioControl(result.gpioControl);
         }
       }
-    }, result => {}
+      this.updateGpio = true;
+    }, result => {this.updateGpio = true;}
     );
   }
 

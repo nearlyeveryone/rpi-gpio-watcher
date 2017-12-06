@@ -10,6 +10,7 @@ class ControlModel(object):
 def loadSession():
     """"""
     dbPath = '/home/nearlyeveryone/WebApi.db'
+    #dbPath = '/home/pi/publish/WebApi.db'
     engine = create_engine('sqlite:///%s' % dbPath, echo=True)
 
     metadata = MetaData(engine)
