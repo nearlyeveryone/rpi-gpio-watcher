@@ -3,6 +3,6 @@ export class GpioControl {
     description: string;
     status: string;
     tooltip: string;
-    parameters: string
+    parameters: string;
     value: boolean;
 }
