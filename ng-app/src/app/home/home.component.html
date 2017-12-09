@@ -18,11 +18,11 @@
 
   <div>
     <ng-template ngFor let-gpioControl [ngForOf]="gpioControls" let-i="index">
-        <ng-template #tipContent>{{gpioControl.tooltip}}</ng-template>
-        <div [class.border-danger]="!gpioControl.value" [class.border-success]="gpioControl.value" class="card text-white card-padding" [ngbTooltip]="tipContent">
+        <div [class.border-danger]="!gpioControl.value" [class.border-success]="gpioControl.value" class="card text-white card-padding">
           <h4>{{gpioControl.description}}</h4>
           <p class="text-info">Status: {{gpioControl.status}}</p>
           <p class="text-muted">Parameters: {{ gpioControl.parameters }}</p>
+          <p>{{ gpioControl.tooltip }}</p>
 
           <button *ngIf="gpioControl.value; else elseBlock" (click)="toggleControl(i)" type="button" class="btn btn-success">On</button>
           <ng-template #elseBlock>

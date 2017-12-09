@@ -45,14 +45,12 @@ export class HomeComponent implements OnInit {
     .subscribe(gpioControls => {
         if(this.updateGpio) {
           this.gpioControls = gpioControls;
-          console.log(this.gpioControls)
         }
         
       });
   }
 
   toggleControl(i: number) {
-    console.log(i);
     this.gpioControls[i].value = !this.gpioControls[i].value;
 
     this.userService.updateGpioControl(this.gpioControls[i]);
@@ -63,7 +61,6 @@ export class HomeComponent implements OnInit {
     var modalRef = this.modalService.open(EditModelContent);
     modalRef.componentInstance.gpioControl = this.gpioControls[index];
     modalRef.result.then((result) => {
-      console.log(result);
       if(modalRef.result)
       {
         if(result.delete)

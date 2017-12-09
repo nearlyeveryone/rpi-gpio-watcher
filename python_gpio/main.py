@@ -79,7 +79,7 @@ GPIO.setmode(GPIO.BCM)
 
 # Door config
 isDoorOpen = None
-door_pin = [4, 5]
+door_pin = [3, 4]
 GPIO.setup(door_pin[0], GPIO.OUT)
 GPIO.setup(door_pin[1], GPIO.OUT)
 # Motor config
@@ -90,8 +90,8 @@ GPIO.output(motor_pin[0], GPIO.LOW)
 GPIO.output(motor_pin[1], GPIO.LOW)
 
 # Servo config
-servo_pwm_max = [1750, 2400]
-servo_pwm_min = [750, 600]
+servo_pwm_max = [2400, 2400]
+servo_pwm_min = [1000, 1000]
 servo_pin = [13, 19]
 
 # pygame config
@@ -151,7 +151,7 @@ class ControlModel(object):
 def load_session():
     # dbPath = '/home/nearlyeveryone/WebApi.db'
     dbPath = '/home/pi/publish/WebApi.db'
-    engine = create_engine('sqlite:///%s' % dbPath, echo=True)
+    engine = create_engine('sqlite:///%s' % dbPath, echo=False)
 
     metadata = MetaData(engine)
     control_models = Table('ControlModels', metadata, autoload=True)
@@ -165,10 +165,23 @@ def load_session():
 def automatic_door(control_model):
     print("doorcheck")
     print(control_model.Parameters)
-    params = split_params(control_model.Parameters)
     global isDoorOpen
 
-    day_time = is_daytime(params['sunriseOffset'], params['sunsetOffset'])
+    sunriseOffset = 0
+    sunsetOffset = 0
+    stateWhenOff = ''
+
+    try:
+        params = split_params(control_model.Parameters)
+        sunriseOffset = int(params['sunriseOffset'])
+        sunsetOffset = int(params['sunsetOffset'])
+        stateWhenOff = params['stateWhenOff'].upper()
+    except:
+        sunriseOffset = 0
+        sunsetOffset = 0
+        stateWhenOff = "CLOSED"
+
+    day_time = is_daytime(sunriseOffset, sunsetOffset)
 
     if control_model.Value:
         if day_time and (not isDoorOpen or isDoorOpen is None):
@@ -179,7 +192,7 @@ def automatic_door(control_model):
             close_door()
             control_model.Status = 'Door closed at ' + datetime.datetime.strftime(datetime.datetime.now(), "%H:%M")
             isDoorOpen = False
-    elif params['stateWhenOff'].upper() == 'OPEN':
+    elif stateWhenOff == 'OPEN' or stateWhenOff == 'OPENED':
         open_door()
         control_model.Status = 'Door is being forced open'
         isDoorOpen = True
@@ -192,35 +205,52 @@ def automatic_door(control_model):
 
 
 def move_camera(control_model):
+    vertical_degrees = 0
+    horizontal_degrees = 0
     if control_model.Value:
-        print(control_model.Parameters)
-        params = split_params(control_model.Parameters)
+        try:
+            params = split_params(control_model.Parameters)
+            vertical_degrees = int(params['verticalDegrees'])
+            horizontal_degrees = int(params['horizontalDegrees'])
+        except:
+            vertical_degrees = 90
+            horizontal_degrees = 90
+
 
         control_model.Status = 'Moving Servo'
         session.commit()
 
-        servo_pwm_v = ((servo_pwm_max[0] - servo_pwm_min[0]) / 180) * int(params['verticalDegrees']) + servo_pwm_min[0]
-        servo_pwm_h = ((servo_pwm_max[1] - servo_pwm_min[1]) / 180) * int(params['horizontalDegrees']) + servo_pwm_min[1]
-        pi.set_servo_pulsewidth(servo_pin[0], servo_pwm_v)
-        pi.set_servo_pulsewidth(servo_pin[1], servo_pwm_h)
+        servo_pwm_v = ((servo_pwm_max[0] - servo_pwm_min[0]) / 180) * vertical_degrees + servo_pwm_min[0]
+        servo_pwm_h = ((servo_pwm_max[1] - servo_pwm_min[1]) / 180) * horizontal_degrees + servo_pwm_min[1]
+
+        if servo_pwm_max[0] >= servo_pwm_v >= servo_pwm_min[0]:
+            pi.set_servo_pulsewidth(servo_pin[0], servo_pwm_v)
+        if servo_pwm_max[1] >= servo_pwm_h >= servo_pwm_min[1]:
+            pi.set_servo_pulsewidth(servo_pin[1], servo_pwm_h)
 
         controlModel.Value = False
         control_model.Status = 'Idle'
         session.commit()
 
 
-
 def feeder(control_model):
     if control_model.Value:
         sound.play(loops=2)
         print(control_model.Parameters)
-        params = split_params(control_model.Parameters)
+
+        timeOn = 0
+        if control_model.Value:
+            try:
+                params = split_params(control_model.Parameters)
+                timeOn = int(params['timeOn'])
+            except:
+                timeOn = 3
 
         control_model.Status = 'Currently Feeding'
         session.commit()
 
         GPIO.output(motor_pin[1], GPIO.HIGH)
-        time.sleep(int(params['timeOn']))
+        time.sleep(timeOn)
         GPIO.output(motor_pin[1], GPIO.LOW)
 
         controlModel.Value = False

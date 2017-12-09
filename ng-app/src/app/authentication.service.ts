@@ -25,7 +25,6 @@ export class AuthenticationService {
         let newToken = response.value;
         if(!(newToken === null)) {
           this.token = newToken;
-          console.log(this.token);
           localStorage.setItem('currentUser', JSON.stringify({token: newToken}));
 
           return true;
