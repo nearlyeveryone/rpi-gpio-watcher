@@ -6,6 +6,8 @@ Currently the python script is setup to control devices for an automated chicken
 ## Description
 The front end Angular5 application is responsible for controlling each configured GPIO control. The front end allows the creation of new GPIO controls as well was the editing of pre existing controls. A GPIO control consists of the following properties:
 The front end Angular5 application is responsible for controlling each configured GPIO control. The front end allows the creation of new GPIO controls as well was the editing of pre existing controls. A GPIO control consists of the following properties:
+
+```
 class GpioControl 
     controlModelId: number;
     description: string;
@@ -13,6 +15,7 @@ class GpioControl
     tooltip: string;
     parameters: string
     value: boolean;
+```
 
 On the front end, only the Description, Tooltip, Parameters, and Value can be configured. The controlModelId is controlled by the backend while the Status is controlled by the python script. The front end allows the user to configure the state of the GPIO control by turning it ON or OFF in addition to controlling the parameters that are passed to the python script.
 
