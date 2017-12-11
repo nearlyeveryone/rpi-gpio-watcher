@@ -1,6 +1,41 @@
 # rpi-gpio-watcher
 The project is divided into three parts: the Angular5 project(front end), the .NET Core 2.0 (back end), and the python script. The website’s static files and API is served through the reverse proxy, NGINX. The website implements authentication through JSON web tokens and is additionally enforces SSL through the HTTPS protocol. A webcam stream is also served behind authentication and uses the embedded hardware decoder to encode the video feed using FFMPEG that is built with OpenMAX IL H.264 support.
 
+Currently the python script is setup to control devices for an automated chicken coop.
+
+## Description
+The front end Angular5 application is responsible for controlling each configured GPIO control. The front end allows the creation of new GPIO controls as well was the editing of pre existing controls. A GPIO control consists of the following properties:
+The front end Angular5 application is responsible for controlling each configured GPIO control. The front end allows the creation of new GPIO controls as well was the editing of pre existing controls. A GPIO control consists of the following properties:
+class GpioControl 
+    controlModelId: number;
+    description: string;
+    status: string;
+    tooltip: string;
+    parameters: string
+    value: boolean;
+
+On the front end, only the Description, Tooltip, Parameters, and Value can be configured. The controlModelId is controlled by the backend while the Status is controlled by the python script. The front end allows the user to configure the state of the GPIO control by turning it ON or OFF in addition to controlling the parameters that are passed to the python script.
+
+The .NET Core 2.0 application on the back end is responsible for authentication and serving the GPIO control data as well as providing an REST API for modifying and retrieving the objects. This application also serves the authenticated HLS video stream data from the webcam. This video data is encoded using FFMPEG using the RPi’s hardware encoder, streamed to the NGINX RTMP server, and converted into an HLS stream. The GPIO controls are stored in a SQLite database to provide an easily configurable and deployable storage solution.
+
+The python script also directly accesses the SQLite database to retrieve and update the GPIO Control objects. In retrospect, it may have been better to access the database through the REST API created in the .NET Core application (due to how the python script was written it would be relatively easy to achieve). The python script reads the GPIO control objects and finally consumes the objects and reads their parameters in order to modify the GPIO outputs on the RPi. This involves the Status of the object to be modified and, in some cases, the object is switched back off once the GPIO process completes.
+
+One control is the automatic chicken feeder control. When this control is turned on, it activates a 12v DC motor for a period of time (duration is determined by parameters), plays a sound to help classically condition the chickens, and turns back off. The status of the GPIO control is updated as this process occurs which the user can view through the web application.
+
+Another control is the automatic chicken door control, this control would ideally be hooked up a linear actuator that opens and closes a door. This time that is door closes is based on the sunrise and sunset with the addition of being able to be tweaked by parameters set on the web application. When the GPIO control is set off, the door is then controlled by another parameter to determine its opened/closed state, acting as an override.
+
+In addition to the two other controls, the webcam’s rotation can be controlled on two axes using two servos mounted on a bracket. The process of setting up a new control is as easy as creating the new control on the web application and configuring how it interacts with the GPIO in the python script. For example, if one would want to control a light in a chicken coop, all they would need to do is create a control, consume it in the python script, and hook up a relay to the GPIO pins on the RPi. All the actions of these GPIO operations be viewed from the webcam, creating quite an entertaining experience.
+On the front end, only the Description, Tooltip, Parameters, and Value can be configured. The controlModelId is controlled by the backend while the Status is controlled by the python script. The front end allows the user to configure the state of the GPIO control by turning it ON or OFF in addition to controlling the parameters that are passed to the python script.
+The .NET Core 2.0 application on the back end is responsible for authentication and serving the GPIO control data as well as providing an REST API for modifying and retrieving the objects. This application also serves the authenticated HLS video stream data from the webcam. This video data is encoded using FFMPEG using the RPi’s hardware encoder, streamed to the NGINX RTMP server, and converted into an HLS stream. The GPIO controls are stored in a SQLite database to provide an easily configurable and deployable storage solution.
+
+The python script also directly accesses the SQLite database to retrieve and update the GPIO Control objects. In retrospect, it may have been better to access the database through the REST API created in the .NET Core application (due to how the python script was written it would be relatively easy to achieve). The python script reads the GPIO control objects and finally consumes the objects and reads their parameters in order to modify the GPIO outputs on the RPi. This involves the Status of the object to be modified and, in some cases, the object is switched back off once the GPIO process completes.
+One control is the automatic chicken feeder control. When this control is turned on, it activates a 12v DC motor for a period of time (duration is determined by parameters), plays a sound to help classically condition the chickens, and turns back off. The status of the GPIO control is updated as this process occurs which the user can view through the web application.
+
+Another control is the automatic chicken door control, this control would ideally be hooked up a linear actuator that opens and closes a door. This time that is door closes is based on the sunrise and sunset with the addition of being able to be tweaked by parameters set on the web application. When the GPIO control is set off, the door is then controlled by another parameter to determine its opened/closed state, acting as an override.
+
+In addition to the two other controls, the webcam’s rotation can be controlled on two axes using two servos mounted on a bracket. The process of setting up a new control is as easy as creating the new control on the web application and configuring how it interacts with the GPIO in the python script. For example, if one would want to control a light in a chicken coop, all they would need to do is create a control, consume it in the python script, and hook up a relay to the GPIO pins on the RPi. All the actions of these GPIO operations be viewed from the webcam, creating quite an entertaining experience.
+
+
 ## Scripts and config files
 ### FFMPEG Script (setup as a service)
 ```bash
