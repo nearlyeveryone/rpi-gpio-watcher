@@ -35,7 +35,7 @@ namespace WebApi.Controllers
         [HttpPost]
         public IActionResult Post([FromBody]ControlModel control)
         {
-            control.ControlModelId;
+            control.ControlModelId = 0;
             _context.ControlModels.Add(control);
             _context.SaveChanges();
             return Ok();

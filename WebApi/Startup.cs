@@ -17,6 +17,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using AspNetCoreRateLimit;
+
 
 using WebApi.Helpers;
 
@@ -34,6 +36,22 @@ namespace WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // needed to load configuration from appsettings.json
+            services.AddOptions();
+
+            // needed to store rate limit counters and ip rules
+            services.AddMemoryCache();
+
+            //load general configuration from appsettings.json
+            services.Configure<IpRateLimitOptions>(Configuration.GetSection("IpRateLimiting"));
+
+            //load ip rules from appsettings.json
+            services.Configure<IpRateLimitPolicies>(Configuration.GetSection("IpRateLimitPolicies"));
+
+            // inject counter and rules stores
+            services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+            services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+
             string t = Configuration["jwtsecret"];
             services.AddDbContext<WebApiContext>(options => 
                 options.UseSqlite("Data Source=WebApi.db"));
@@ -86,6 +104,8 @@ namespace WebApi
                 RequireHeaderSymmetry = false,
                 ForwardLimit = null
             });
+
+            app.UseIpRateLimiting();
 
             //if (env.IsDevelopment())
             //{
